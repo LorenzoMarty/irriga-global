@@ -1,0 +1,16 @@
+[
+  {
+    "id": "2f20a3b1-6cb1-44f9-937b-df340ad6aa88",
+    "pivotId": "8fd44e91-b0e7-4b90-aaf4-cdb81cfa4592",
+    "applicationAmount": 20.0,
+    "irrigationDate": "2025-07-01T10:00:00Z",
+    "userId": "a8b2b1f1-3c51-4782-bba9-1234567890ab"
+  },
+  {
+    "id": "65ecfa76-4630-4d0c-9016-c6f111a9c2c9",
+    "pivotId": "c2029b37-e122-482a-bbb2-91cd144ee1f7",
+    "applicationAmount": 15.5,
+    "irrigationDate": "2025-07-15T08:30:00Z",
+    "userId": "a8b2b1f1-3c51-4782-bba9-1234567890ab"
+  }
+]
