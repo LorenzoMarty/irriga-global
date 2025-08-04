@@ -53,9 +53,11 @@ function authenticate()
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
+// === ROTAS DE AUTENTICAÇÃO ===
 if ($uri === '/auth/register' && $method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $users = readJson(__DIR__ . '/../storage/data/users.json');
+
     foreach ($users as $user) {
         if ($user['username'] === $data['username']) {
             echo json_encode(['error' => 'Usuário já existe.']);
@@ -75,6 +77,7 @@ if ($uri === '/auth/register' && $method === 'POST') {
 if ($uri === '/auth/login' && $method === 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
     $users = readJson(__DIR__ . '/../storage/data/users.json');
+
     foreach ($users as $user) {
         if ($user['username'] === $data['username'] && password_verify($data['password'], $user['password'])) {
             $payload = [
@@ -94,9 +97,12 @@ if ($uri === '/auth/login' && $method === 'POST') {
     exit;
 }
 
+// === PROTEGIDO POR TOKEN ===
 $authUser = authenticate();
 
+// === PIVOTS ===
 $pivotFile = __DIR__ . '/../storage/data/pivots.json';
+
 if ($uri === '/pivots' && $method === 'GET') {
     echo json_encode(readJson($pivotFile));
     exit;
@@ -112,7 +118,48 @@ if ($uri === '/pivots' && $method === 'POST') {
     exit;
 }
 
+if (preg_match('#^/pivots/([^/]+)$#', $uri, $matches)) {
+    $id = $matches[1];
+    $pivots = readJson($pivotFile);
+
+    if ($method === 'GET') {
+        foreach ($pivots as $pivot) {
+            if ($pivot['id'] === $id) {
+                echo json_encode($pivot);
+                exit;
+            }
+        }
+        http_response_code(404);
+        echo json_encode(['error' => 'Pivô não encontrado.']);
+        exit;
+    }
+
+    if ($method === 'PUT') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        foreach ($pivots as &$pivot) {
+            if ($pivot['id'] === $id) {
+                $pivot = array_merge($pivot, $data);
+                saveJson($pivotFile, $pivots);
+                echo json_encode(['message' => 'Pivô atualizado.']);
+                exit;
+            }
+        }
+        http_response_code(404);
+        echo json_encode(['error' => 'Pivô não encontrado.']);
+        exit;
+    }
+
+    if ($method === 'DELETE') {
+        $filtered = array_filter($pivots, fn($p) => $p['id'] !== $id);
+        saveJson($pivotFile, array_values($filtered));
+        echo json_encode(['message' => 'Pivô removido.']);
+        exit;
+    }
+}
+
+// === IRRIGATIONS ===
 $irrigationFile = __DIR__ . '/../storage/data/irrigations.json';
+
 if ($uri === '/irrigations' && $method === 'GET') {
     echo json_encode(readJson($irrigationFile));
     exit;
@@ -129,5 +176,30 @@ if ($uri === '/irrigations' && $method === 'POST') {
     exit;
 }
 
+if (preg_match('#^/irrigations/([^/]+)$#', $uri, $matches)) {
+    $id = $matches[1];
+    $irrigations = readJson($irrigationFile);
+
+    if ($method === 'GET') {
+        foreach ($irrigations as $entry) {
+            if ($entry['id'] === $id) {
+                echo json_encode($entry);
+                exit;
+            }
+        }
+        http_response_code(404);
+        echo json_encode(['error' => 'Registro não encontrado.']);
+        exit;
+    }
+
+    if ($method === 'DELETE') {
+        $filtered = array_filter($irrigations, fn($e) => $e['id'] !== $id);
+        saveJson($irrigationFile, array_values($filtered));
+        echo json_encode(['message' => 'Registro de irrigação removido.']);
+        exit;
+    }
+}
+
+// === ROTA NÃO ENCONTRADA ===
 http_response_code(404);
 echo json_encode(['error' => 'Rota não encontrada.']);
